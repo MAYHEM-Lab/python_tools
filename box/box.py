@@ -32,11 +32,13 @@ def main():
     parser.add_argument('app',action='store',help='Box App Name')
 
     parser.add_argument('fid',action='store',help='File ID in Box')
+    parser.add_argument('did',action='store',help='Directory ID in Box')
     args = parser.parse_args()
 
     client=args.cli
     secret=args.sec
     fid=args.fid
+    did=args.did
     app = args.app
 
     #acquire OAuth2 tokens and store them if generated, refresh if expired
@@ -47,6 +49,8 @@ def main():
     res = oauth2_cli.get_thumbnail(fid) #uses requests not auth client
     print 'Return Message: {0}'.format(res)
     res = oauth2_cli.get_file_using_boxclient(fid) #uses auth client
+    print 'Return Message: {0}'.format(res)
+    res = oauth2_cli.get_folder_using_boxclient(did)
     print 'Return Message: {0}'.format(res)
 
 
