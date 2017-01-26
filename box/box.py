@@ -19,6 +19,7 @@ import argparse,json,os,sys,time
 from contextlib import contextmanager #for timeblock
 from boxsdk import Client, OAuth2
 from boxsdk.exception import BoxOAuthException
+import oauth2_cli
 import oauth2_cli_util
 
 DEBUG = False
@@ -42,9 +43,13 @@ def main():
     #acquire OAuth2 tokens and store them if generated, refresh if expired
     #make sure that this is one of the redirect URIs in the oauth setup on box app
     redir_uri='http://localhost'
-    oauth2_cli_util.setupStorage(app,client,redir_uri)
-    creds = oauth2_cli_util.getTokens()
-    tok,ref = creds['access_token'],creds['refresh_token']
+    token_uri='https://app.box.com/api/oauth2/token'
+    auth_uri='https://app.box.com/api/oauth2/authorize',
+    oauth2_cli.initialize(client,secret,redir_uri,token_uri)
+    res = oauth2_cli.get_thumbnail(fid) #uses requests not auth client
+
+    sys.exit(1)
+
     if DEBUG:
         print 'Initial Access Token is: {0}'.format(tok)
     if tok is None:
