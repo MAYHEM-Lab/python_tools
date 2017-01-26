@@ -1,7 +1,7 @@
 '''Author: Chandra Krintz, UCSB, ckrintz@cs.ucsb.edu, AppScale BSD license
 
-   USAGE: python box.py BOX_SECRET BOX_CLIENT BOX_APPNAME BOX_FILEID
-   python box.py "..." "..." "..." "95599079123"
+   USAGE: python box.py BOX_SECRET BOX_CLIENT BOX_APPNAME BOX_FILEID BOX_FOLDERID
+   python box.py sec cli app 95599079123 11396690300
 
    The program performs the Oauth2 handshake to have the user retrieve the code.
    It stores the access and refresh token in a file using json for future use.
