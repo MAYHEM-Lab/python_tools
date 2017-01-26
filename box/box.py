@@ -20,7 +20,6 @@ from contextlib import contextmanager #for timeblock
 from boxsdk import Client, OAuth2
 from boxsdk.exception import BoxOAuthException
 import oauth2_cli
-import oauth2_cli_util
 
 DEBUG = False
 
@@ -44,36 +43,10 @@ def main():
     #make sure that this is one of the redirect URIs in the oauth setup on box app
     redir_uri='http://localhost'
     token_uri='https://app.box.com/api/oauth2/token'
-    auth_uri='https://app.box.com/api/oauth2/authorize',
     oauth2_cli.initialize(client,secret,redir_uri,token_uri)
     res = oauth2_cli.get_thumbnail(fid) #uses requests not auth client
-
-    sys.exit(1)
-
-    if DEBUG:
-        print 'Initial Access Token is: {0}'.format(tok)
-    if tok is None:
-        print 'box:main, tok is None, calling setup'
-        ucsbauth = oauth2_cli_util.setupOAuth2(
-            auth='https://app.box.com/api/oauth2/authorize',
-            token='https://app.box.com/api/oauth2/token',
-            redir=redir_uri,
-            client=client,
-            secret=secret,
-            app=app,
-        )
-        if ucsbauth is None:
-            print 'Error: unable to authenticate and authorize'
-            sys.exit(1)
-        tok,ref = oauth2_cli_util.getTokens()
-        if tok is None:
-            print 'Unknown Error'
-            sys.exit(1)
-
-    #for testing - this will cause refresh of the token if needed
-    #print oauth2_cli_util.query('https://api.box.com/2.0/users/me')
-
-    res = oauth2_cli_util.get_thumbnail(fid) #uses requests not auth client
+    print 'Return Message: {0}'.format(res)
+    res = oauth2_cli.get_file_using_boxclient(fid) #uses auth client
     print 'Return Message: {0}'.format(res)
 
 

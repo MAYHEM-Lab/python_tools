@@ -248,10 +248,10 @@ def get_thumbnail(fileID):
 
     if r is not None:
 	#This is where we insert the code for storing the data that comes back from the request
-        if r.status_code == 401:  #unauthorized - check if refresh is needed, else regenerate from code
+        if r.status_code == 401 or r.status_code == 400:  #unauthorized - check if refresh is needed, else regenerate from code
 
             #todo: this returns false up on failure, handle it better
-            #success = refresh_creds()
+            success = refresh_creds()
             success = None
 	    if not success:
                 print 'refresh failed'
