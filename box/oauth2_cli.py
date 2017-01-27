@@ -2,7 +2,7 @@
    USAGE: import oauth2_cli
 '''
 
-import json, traceback, requests, sys, argparse, os
+import json, traceback, requests, sys, argparse, os, exifread
 from datetime import datetime, timedelta
 #from urllib import urlencode
 from contextlib import contextmanager #for timeblock
@@ -10,9 +10,15 @@ from boxsdk import OAuth2
 from boxsdk import Client
 from boxsdk.network.default_network import DefaultNetwork
 import boxsdk.exception 
+import boxsdk.exception 
+import piexif
 from pprint import pformat
+try:
+    from cStringIO import StringIO
+except:
+    from StringIO import StringIO
 
-DEBUG = False
+DEBUG = True
 TEST_REFRESH = False #set this to True to test that refresh works
 #this is set in intialize_storage which must be run before all else, app entry is /
 clientID = 'YYY'
@@ -97,7 +103,7 @@ def oauthFromSecret(cli,sec):
 
 ########## oauthFromTokens() ###################
 def oauthFromTokens(acc,ref,cli,sec):
-    #get oauth object from tokens, TODO: check if refresh works
+    #get oauth object from tokens
     oauth = None
     if DEBUG: 
         print 'in oauth2_cli:oauthFromTokens()'
@@ -143,7 +149,8 @@ def setupClient():
 	print 'unable to create oauth2 object'
         sys.exit(1)
     if DEBUG:
-        client = Client(oauth,LoggingNetwork())
+        #client = Client(oauth,LoggingNetwork())
+        client = Client(oauth)
     else: 
         client = Client(oauth)
     if client is None:
@@ -191,6 +198,53 @@ def writeTokens(acc,ref):
         f.write(ref+'\n')
     
 #############################
+def download(fid,ldir,flat=True):    
+    '''Download files from box directory recursively into ldir '''
+    if not flat:
+        print 'unsupported feature, only flattening into ldir is currently supported'''
+        return 'Error - Flat only available'
+    try:
+        folder = boxClient.folder( folder_id=fid, ).get()
+    except: #try again
+        folder = boxClient.folder( folder_id=fid, ).get()
+
+    if DEBUG:
+        print 'in oauth2_cli.download() {0} {1}'.format(fid,folder.name)
+    MAX = 100
+    offset = 0
+    items = folder.get_items(limit=MAX,offset=offset)
+    while len(items) is not 0:
+        for f in items:
+	    if type(f).__name__=='Folder':
+                download(f.id,ldir)
+	    if type(f).__name__=='File':
+                fname = '{0}/{1}'.format(ldir,f.name)
+		get_thumbnail(f.id,fname)
+
+		#instead of saving off the thumbnail, do the actual file
+                #boxfile = get_file_using_boxclient(f.id)
+                #fileAsString = boxfile.content()
+		#process_jpeg(fileAsString) #rename using exif info (not working)
+                
+        offset += MAX
+        items = folder.get_items(limit=MAX,offset=offset)
+    return
+
+#############################
+def process_jpeg(fin):    
+    ''' this doesn't work for the images without jpeg exif info '''
+    fjpeg = StringIO(fin)
+    tags = exifread.process_file(fjpeg)
+    print tags
+    stop_tag = 'Image DateTime'
+    dt_tag = vars(tags[stop_tag])['printable']
+    photo_id = 0
+    #dt_tag: 2014:08:01 19:06:50
+    d = (dt_tag.split()[0]).replace(':','-')
+    t = dt_tag.split()[1]
+    newfname = 'Main_{1}_{2}_{3}.JPG'.format(prefix,d,t,photo_id)
+
+#############################
 def get_folder_using_boxclient(fid):    
     try:
         folder = boxClient.folder( folder_id=fid, ).get()
@@ -222,7 +276,7 @@ def get_file_using_boxclient(fid):
 
 
 ################ get_thumbnail ##################
-def get_thumbnail(fileID):
+def get_thumbnail(fileID,fname='thumbnail.png'):
     
     '''
     This function is invoked to access the API at api_url using requests
@@ -230,9 +284,11 @@ def get_thumbnail(fileID):
     It does NOT use the Box Client
     get thumbnail:
     curl --header "Authorization: Bearer XXX" https://api.box.com/2.0/files/94082555506/thumbnail.png\?min_height=256\&min_width=256 -o test.png
+
+    if there is no thumbnail, nothing will be downloaded/stored (box generates thumbnails)
     '''
     if DEBUG:
-	print 'in oauth2_cli:get_thumbnail()'
+	print 'in oauth2_cli:get_thumbnail() {0} {1}'.format(fileID, fname)
     access_token,refresh_token = readTokens() 
     
     header = {'Authorization': 'Bearer {0}'.format(access_token)}
@@ -270,7 +326,7 @@ def get_thumbnail(fileID):
         if r is not None:
             if r.status_code == 200:
                 output = {'name':'api_access_succeeded200'}
-	        with open('thumbnail.png', 'wb') as f:
+	        with open(fname, 'wb') as f:
                     f.write(r.content)
             else: 
                 output = {'name':'api_access_failed4'}
