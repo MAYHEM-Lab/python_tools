@@ -31,7 +31,11 @@ def main():
 
         with open(fname, 'rb') as fin:
 	    for fi in fin:
- 		fout.write('{0},{1},Sedgwick Main Road Camera Trap,http://169.231.235.52/static/sr/zooniverse/{1},UCSB Sedgwick Reserve,BSD,Main Road Camera Trap\n'.format(count,fi.strip()))
+                newfname = fi.strip()
+                if newfname.endswith('.JPG'):
+                    newfname = newfname.replace('.JPG','.jpg')
+ 		fout.write('{0},{1},Sedgwick Main Road Camera Trap,http://169.231.235.52/static/sr/zooniverse/{1},UCSB Sedgwick Reserve,BSD,Main Road Camera Trap\n'.format(count,newfname))
+                count += 1
 
 if __name__ == "__main__":
         main()
